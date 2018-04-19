@@ -10,7 +10,7 @@ import {EditorState, RichUtils} from "draft-js";
 import classNames from "classnames";
 import ToolbarItem from "./ToolbarItem";
 import {getSelectionCoords} from "../utils";
-
+import ExtendedRichUtils, {ALIGNMENT_DATA_KEY} from "../utils/ExtendedRichUtils";
 
 export default class Toolbar extends Component {
   static defaultProps = {
@@ -52,6 +52,15 @@ export default class Toolbar extends Component {
     this.setState({editingEntity: entity});
   }
 
+  /**
+   * Draft-js alignment support by block data
+   * @see https://gist.github.com/joshdover/7c5e61ed68cc5552dc8a25463e357960
+   */
+  toggleAlignment(alignment) {
+    const newEditorState = ExtendedRichUtils.toggleAlignment(this.props.editorState, alignment);
+    this.props.onChange(newEditorState);
+  }
+
   renderButton(item, position) {
     let current = null;
     let toggle = null;
@@ -89,6 +98,18 @@ export default class Toolbar extends Component {
         key = "entity-"+entity;
         toggle = () => this.toggleEntity(entity);
         active = this.hasEntity(entity);
+        break;
+      }
+      case "alignment": {
+        const selection = this.props.editorState.getSelection();
+        const current = this.props.editorState
+          .getCurrentContent()
+          .getBlockForKey(selection.getStartKey())
+          .getData()
+          .get(ALIGNMENT_DATA_KEY);
+
+        toggle = () => this.toggleAlignment(item.style);
+        active = item.style === current;
         break;
       }
     }
